@@ -1,2 +1,95 @@
 blueprint:
   name: Simple Washing Machine Notification
+  description: Sends notification when washing machine starts and finiish working.
+  domain: automation
+  author: Mamun Srizon
+  source_url: https://gist.github.com/srizon/fd79656490d9cf50a64762cbb13761df
+
+  input:
+    power_sensor:
+      name: Washing machine power sensor
+      description: Sensor that monitors the power consumption of the washing machine
+      selector:
+        entity:
+          filter:
+            - domain: binary_sensor
+            - device_class: power
+
+    start_message:
+      name: Start message
+      description: Notification message to send when the washing machine starts working.
+      selector:
+        text:
+
+    end_message:
+      name: End message
+      description: Notification message to send when the wash is done.
+      selector:
+        text:
+
+trigger:
+  - platform: state
+    entity_id:
+      - !input power_sensor
+    for:
+      hours: 0
+      minutes: 0
+      seconds: 0
+
+condition:
+  - condition: not
+    conditions:
+      - condition: state
+        entity_id: !input power_sensor
+        state: unknown
+      - condition: state
+        entity_id: !input power_sensor
+        state: unavailable
+
+action:
+  - choose:
+      - conditions:
+          - condition: numeric_state
+            entity_id: !input power_sensor
+            above: 1
+          - condition: state
+            entity_id: input_select.washing_machine_status
+            state: Ready
+
+        sequence:
+          - service: input_select.select_option
+            target:
+              entity_id: input_select.washing_machine_status
+            data:
+              option: Working
+
+          - service: notify.notify
+            data:
+              message: !input start_message
+
+      - conditions:
+          - condition: numeric_state
+            entity_id: !input power_sensor
+            below: 1
+          - condition: state
+            entity_id: input_select.washing_machine_status
+            state: Working
+
+        sequence:
+          - service: input_select.select_option
+            target:
+              entity_id: input_select.washing_machine_status
+            data:
+              option: Finished
+
+          - service: notify.notify
+            data:
+              message: !input end_message
+
+          - service: input_select.select_option
+            target:
+              entity_id: input_select.washing_machine_status
+            data:
+              option: Ready
+
+mode: restart
