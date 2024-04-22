@@ -3,7 +3,7 @@ blueprint:
   description: Sends notification when washing machine starts and finiish working.
   domain: automation
   author: Mamun Srizon
-  source_url: https://gist.github.com/srizon/fd79656490d9cf50a64762cbb13761df
+  source_url: https://github.com/srizon/washing-machine/blob/main/simple-washing-machine-notification.yaml
 
   input:
     power_sensor:
